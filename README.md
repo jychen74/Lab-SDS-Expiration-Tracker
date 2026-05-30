@@ -24,14 +24,13 @@ A serverless, zero-cost, and server-free Web Application designed specifically f
 請點擊下方安全連結，將系統範本複製到您個人的 Google 帳號中：
 👉 **[【點我立刻建立管理系統試算表複本】](https://docs.google.com/spreadsheets/d/1AZ8uN7qDuEBC6OBNbeNcrYt6IGBVJKlaJE3hgjCL_aw/copy)**
 
-*注意：在複製完成並進入網頁後，請重新整理一次瀏覽器，工具列上方才會出現自訂選單「🧪 SDS 系統管理」。*
+#### 步驟 2：一鍵自動初始化（若未看見選單，請重新整理網頁）
 
-#### 步驟 2：一鍵自動初始化
-
-1. 點選試算表上方工具列的自訂選單：**【🧪 SDS 系統管理】 -> 【⚙️ 初始化試算表欄位】**。
-2. **帳號授權放行**：首次執行時 Google 會彈出隱私權警示畫面，請依序點選：
+1. 進入您剛複製好的全新試算表，**請務必重新整理一次網頁（或按 F5）**，工具列上方即會出現自訂選單。
+2. 點選試算表上方工具列的自訂選單：**【🧪 SDS 系統管理】 -> 【⚙️ 初始化試算表欄位】**。
+3. **帳號授權放行**：首次執行時 Google 會彈出隱私權警示畫面，請依序點選：
    * **「進階」** -> **「前往 shared_Lab_SDS (不安全)」** -> **「允許」**。
-3. **自動建立雲端資料夾**：授權完成後畫面會跳出提示對話框，**請直接「留空」（不要輸入任何文字）並點擊「確定」**，系統即會自動在您的雲端硬碟根目錄建好專用 PDF 資料夾。
+4. **自動建立雲端資料夾**：授權完成後畫面會跳出提示對話框，**請直接「留空」（不要輸入任何文字）並點擊「確定」**，系統即會自動在您的雲端硬碟根目錄建好專用 PDF 資料夾。
 
 #### 步驟 3：發布您的管理網頁
 
@@ -50,14 +49,13 @@ A serverless, zero-cost, and server-free Web Application designed specifically f
 Click the link below to clone the system template directly into your personal Google account:
 👉 **[【Click Here to Clone the System Template Spreadsheet】](https://docs.google.com/spreadsheets/d/1AZ8uN7qDuEBC6OBNbeNcrYt6IGBVJKlaJE3hgjCL_aw/copy)**
 
-*Note: Please refresh the spreadsheet page after copying, and you will see a custom menu "🧪 SDS 系統管理" appear on the top toolbar.*
+#### Step 2: One-Click System Initialization (Refresh if menu is missing)
 
-#### Step 2: One-Click System Initialization
-
-1. Click the custom menu on the top toolbar: **【🧪 SDS 系統管理】 -> 【⚙️ 初始化試算表欄位】**.
-2. **Grant Permission**: Google will pop up a security warning for the first run. Grant permissions by clicking:
+1. Open your copied Google Spreadsheet and **refresh the page (F5)** to load the custom menu.
+2. Click the custom menu on the top toolbar: **【🧪 SDS 系統管理】 -> 【⚙️ 初始化試算表欄位】**.
+3. **Grant Permission**: Google will pop up a security warning for the first run. Grant permissions by clicking:
    * **"Advanced"** -> **"Go to shared_Lab_SDS (unsafe)"** -> **"Allow"**.
-3. **Auto Create Folder**: After authorization, a prompt window will appear. **Leave the text box completely BLANK and click "OK"**. The system will automatically create a dedicated PDF storage folder in your Google Drive root directory.
+4. **Auto Create Folder**: After authorization, a prompt window will appear. **Leave the text box completely BLANK and click "OK"**. The system will automatically create a dedicated PDF storage folder in your Google Drive root directory.
 
 #### Step 3: Deploy the Web Application
 
