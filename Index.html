@@ -90,10 +90,6 @@
       align-items: center;
       z-index: 9999;
     }
-    
-    /* ============================================================ */
-    /* Ko-fi 贊助按鈕與動態效果自訂美化                             */
-    /* ============================================================ */
     .btn-kofi {
       background-color: #ff5e5b;
       color: #ffffff !important;
@@ -126,26 +122,26 @@
     <div class="row main-container">
       
       <div class="col-lg-4 left-sidebar">
-        <h3 class="mb-4 text-primary fw-bold text-center text-lg-start">🧪 試劑品項防錯登錄</h3>
+        <h3 class="mb-4 text-primary fw-bold text-center text-lg-start" id="uiSidebarTitle">🧪 試劑品項防錯登錄</h3>
         
         <form id="sdsForm" onsubmit="handleFormSubmit(event)">
           <div class="mb-3">
-            <label for="reagentName" class="form-label fw-bold">試劑/套組名稱 <span class="text-danger">*</span></label>
+            <label for="reagentName" class="form-label fw-bold" id="lblField1">試劑/套組名稱 <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="reagentName" required placeholder="例如：SQK-NBD114.24 文庫製備套組">
           </div>
           
           <div class="mb-3">
-            <label for="brandName" class="form-label fw-bold">原廠廠牌 <span class="text-danger">*</span></label>
+            <label for="brandName" class="form-label fw-bold" id="lblField2">原廠廠牌 <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="brandName" required placeholder="例如：Oxford Nanopore (ONT)">
           </div>
           
           <div class="mb-3">
-            <label for="versionDate" class="form-label fw-bold">目前 SDS 版本日期 <span class="text-danger">*</span></label>
+            <label for="versionDate" class="form-label fw-bold" id="lblField3">目前 SDS 版本日期 <span class="text-danger">*</span></label>
             <input type="date" class="form-control" id="versionDate" required>
           </div>
           
           <div class="mb-4">
-            <label for="sdsFile" class="form-label fw-bold">上傳全新安全資料表 (PDF) <span class="text-danger">*</span></label>
+            <label for="sdsFile" class="form-label fw-bold" id="lblField4">上傳全新安全資料表 (PDF) <span class="text-danger">*</span></label>
             <input class="form-control" type="file" id="sdsFile" accept=".pdf" required>
             <div class="form-text text-muted">檔案將經由安全序列化直接存入實驗室專用雲端硬碟。</div>
           </div>
@@ -166,7 +162,7 @@
       
       <div class="col-lg-8 right-content">
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
-          <h2 class="fw-bold text-dark m-0">📊 實驗室動態資產看板</h2>
+          <h2 class="fw-bold text-dark m-0" id="uiDashboardTitle">📊 實驗室動態資產看板</h2>
           <div style="max-width: 300px; width: 100%;">
             <input type="text" id="searchInput" class="form-control" onkeyup="filterTable()" placeholder="🔍 輸入關鍵字毫秒級動態篩選...">
           </div>
@@ -177,16 +173,16 @@
             <thead>
               <tr>
                 <th onclick="sortTable(0)">序號 ⇅</th>
-                <th>試劑/套組名稱</th>
-                <th>廠牌</th>
-                <th>目前 SDS 版本日期</th>
+                <th id="thField1">試劑/套組名稱</th>
+                <th id="thField2">廠牌</th>
+                <th id="thField3">目前 SDS 版本日期</th>
                 <th>下次更新日期 (3年)</th>
                 <th onclick="sortTable(5)">狀態 ⇅</th>
                 <th class="text-center">雲端管轄</th>
               </tr>
             </thead>
             <tbody id="sdsTableBody">
-              </tbody>
+            </tbody>
           </table>
         </div>
       </div>
@@ -200,21 +196,58 @@
   
   <script>
     let globalDataCache = [];
-    let currentReplaceTarget = null; // 紀錄當前準備替換 PDF 的 rowNum 與品項名
-    let currentSortDirections = [true, true, true, true, true, true, true]; // 控制排序方向
+    let currentReplaceTarget = null; 
+    let currentSortDirections = [true, true, true, true, true, true, true]; 
 
-    // 網頁開啟時自動讀取資料
+    // 網頁開啟時自動讀取設定與資料
     document.addEventListener("DOMContentLoaded", function() {
-      loadData();
+      initSystemSettings();
     });
 
     function showLoading(status) {
       document.getElementById("loadingOverlay").style.display = status ? "flex" : "none";
     }
 
+    // 🚀 新增：動態向後台載入自訂欄位設定
+    function initSystemSettings() {
+      showLoading(true);
+      google.script.run
+        .withSuccessHandler(function(settings) {
+          // 如果後台有設定，就全面抽換前端 UI 靜態文字
+          if (settings.sidebarTitle) document.getElementById("uiSidebarTitle").innerText = "🧪 " + settings.sidebarTitle;
+          if (settings.dashboardTitle) document.getElementById("uiDashboardTitle").innerText = "📊 " + settings.dashboardTitle;
+          
+          if (settings.field1Name) {
+            document.getElementById("lblField1").innerHTML = settings.field1Name + ' <span class="text-danger">*</span>';
+            document.getElementById("thField1").innerText = settings.field1Name;
+            // 防呆：若使用者已更換非 SDS 系統，移除舊有試劑 placeholder 避免誤導
+            if (settings.field1Name !== "試劑/套組名稱") document.getElementById("reagentName").placeholder = "";
+          }
+          if (settings.field2Name) {
+            document.getElementById("lblField2").innerHTML = settings.field2Name + ' <span class="text-danger">*</span>';
+            document.getElementById("thField2").innerText = settings.field2Name;
+            if (settings.field2Name !== "原廠廠牌") document.getElementById("brandName").placeholder = "";
+          }
+          if (settings.field3Name) {
+            document.getElementById("lblField3").innerHTML = settings.field3Name + ' <span class="text-danger">*</span>';
+            document.getElementById("thField3").innerText = settings.field3Name;
+          }
+          if (settings.field4Name) {
+            document.getElementById("lblField4").innerHTML = settings.field4Name + ' <span class="text-danger">*</span>';
+          }
+          
+          // 設定抽換完畢後，接著讀取主要的表格資產資料
+          loadData();
+        })
+        .withFailureHandler(function(err) {
+          console.error("無法加載系統自訂設定: " + err);
+          loadData(); // 就算設定失敗也繼續載入資料，確保系統不卡死
+        })
+        .getSystemSettings();
+    }
+
     // 調用後端獲取完整試算表資產
     function loadData() {
-      showLoading(true);
       google.script.run
         .withSuccessHandler(function(data) {
           globalDataCache = data;
@@ -266,7 +299,7 @@
 
     // 處理雙擊即時修改儲存格文字 (Inline Editing)
     function makeEditable(cell, rowNum, columnType) {
-      if (cell.querySelector("input")) return; // 防止重複點擊
+      if (cell.querySelector("input")) return; 
       
       const originalValue = cell.innerText.trim();
       const input = document.createElement("input");
@@ -279,7 +312,6 @@
       cell.appendChild(input);
       input.focus();
       
-      // 綁定儲存事件
       input.onblur = function() {
         commitCellEdit(cell, rowNum, columnType, input.value, originalValue);
       };
@@ -287,7 +319,7 @@
       input.onkeydown = function(e) {
         if (e.key === "Enter") input.blur();
         if (e.key === "Escape") {
-          cell.innerHTML = originalValue; // 取消修改
+          cell.innerHTML = originalValue; 
         }
       };
     }
@@ -302,7 +334,7 @@
       google.script.run
         .withSuccessHandler(function(res) {
           if (res.success) {
-            loadData(); // 重新讀取，同步重新整理狀態與 3 年效期計算
+            loadData(); 
           } else {
             alert("修改儲存失敗：" + res.error);
             cell.innerHTML = originalValue;
@@ -317,13 +349,11 @@
         .updateCellFromUI(rowNum, columnType, newValue);
     }
 
-    // 點擊「替換 PDF」按鈕時，觸發隱藏的 input file 標籤
     function triggerFileReplacement(rowNum, reagentName, brandName) {
       currentReplaceTarget = { rowNum, reagentName, brandName };
       document.getElementById("replaceFileInput").click();
     }
 
-    // 執行線上覆蓋/替換雲端 PDF
     function executeFileReplacement() {
       const fileInput = document.getElementById("replaceFileInput");
       if (fileInput.files.length === 0 || !currentReplaceTarget) return;
@@ -337,9 +367,9 @@
         google.script.run
           .withSuccessHandler(function(res) {
             alert(res.message);
-            fileInput.value = ""; // 清空
+            fileInput.value = ""; 
             currentReplaceTarget = null;
-            loadData(); // 重新整理看板
+            loadData(); 
           })
           .withFailureHandler(function(err) {
             alert("檔案替換發生重大錯誤：" + err);
@@ -356,7 +386,6 @@
       reader.readAsDataURL(file);
     }
 
-    // 表單登錄提交與 Base64 序列化上傳
     function handleFormSubmit(event) {
       event.preventDefault();
       showLoading(true);
@@ -380,8 +409,8 @@
         google.script.run
           .withSuccessHandler(function(response) {
             alert(response.message);
-            document.getElementById("sdsForm").reset(); // 重置表單
-            loadData(); // 重新整理看板
+            document.getElementById("sdsForm").reset(); 
+            loadData(); 
           })
           .withFailureHandler(function(error) {
             alert("系統寫入發生錯誤: " + error);
@@ -392,13 +421,12 @@
       reader.readAsDataURL(file);
     }
 
-    // 毫秒級前端關鍵字動態搜尋功能
     function filterTable() {
       const input = document.getElementById("searchInput").value.toUpperCase();
       const trs = document.getElementById("sdsTableBody").getElementsByTagName("tr");
       
       for (let i = 0; i < trs.length; i++) {
-        if (trs[i].getElementsByTagName("td").length < 2) continue; // 跳過查無資料的行
+        if (trs[i].getElementsByTagName("td").length < 2) continue; 
         const nameText = trs[i].getElementsByTagName("td")[1].innerText.toUpperCase();
         const brandText = trs[i].getElementsByTagName("td")[2].innerText.toUpperCase();
         
@@ -410,24 +438,21 @@
       }
     }
 
-    // 欄位排序引擎（支援序號數值、狀態優先級排序）
     function sortTable(colIndex) {
       const tableBody = document.getElementById("sdsTableBody");
       let rows = Array.from(tableBody.querySelectorAll("tr"));
       if (rows.length === 0 || rows[0].innerText.includes("目前尚無登錄")) return;
 
       const direction = currentSortDirections[colIndex];
-      currentSortDirections[colIndex] = !direction; // 切換下一次排序方向
+      currentSortDirections[colIndex] = !direction; 
 
       rows.sort((rowA, rowB) => {
         const cellA = rowA.getElementsByTagName("td")[colIndex].innerText.trim();
         const cellB = rowB.getElementsByTagName("td")[colIndex].innerText.trim();
 
         if (colIndex === 0) {
-          // 序號排序 (數值比較)
           return direction ? Number(cellA) - Number(cellB) : Number(cellB) - Number(cellA);
         } else if (colIndex === 5) {
-          // 狀態優先級排序 (🚨已過期 > ⚠️預警 > ✅安全)
           const getPriority = (status) => {
             if (status.includes("🚨")) return 3;
             if (status.includes("⚠️")) return 2;
@@ -438,7 +463,6 @@
         return 0;
       });
 
-      // 重新注入排序後的 rows
       tableBody.innerHTML = "";
       rows.forEach(row => tableBody.appendChild(row));
     }

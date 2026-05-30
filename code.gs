@@ -1,9 +1,7 @@
 /**
- * 實驗室 SDS 效期與雲端硬碟管理系統 (GitHub 開源免改代碼版)
- * * 💡 亮點：使用者無需修改本檔案任何代碼。
- * 首次執行或初始化時，系統會自動跳出對話框要求輸入 Google Drive 資料夾 ID，
- * 若使用者直接按確定或輸入 create，系統將會自動建立專用資料夾，
- * 並利用 PropertiesService 自動永久儲存於後端環境變數中。
+ * 實驗室 SDS 效期與雲端硬碟管理系統 (GitHub 開源免改代碼完全版)
+ * 💡 亮點：使用者無需修改本檔案任何代碼。
+ * 系統兼具動態自訂標題與欄位名稱功能，並內建 Self-healing（自我修復/自動建立設定表）機制。
  */
 
 function doGet() {
@@ -23,6 +21,72 @@ function doGet() {
 }
 
 /**
+ * 核心升級：獲取並管理系統自訂標題與欄位名稱
+ * 若 settings 工作表不存在，系統將自動建立並寫入初始預設值（Self-healing）
+ */
+function getSystemSettings() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("settings");
+
+    // 🔥 防呆與自我修復機制：如果找不到 settings 工作表，就當場建立一個全新的！
+    if (!sheet) {
+      sheet = ss.insertSheet("settings");
+
+      // 定義完美的預設自訂欄位與標題設定
+      var defaultSettings = [
+        ["sidebarTitle", "試劑品項防錯登錄"],
+        ["dashboardTitle", "實驗室動態資產看板"],
+        ["field1Name", "試劑/套組名稱"],
+        ["field2Name", "原廠廠牌"],
+        ["field3Name", "目前 SDS 版本日期"],
+        ["field4Name", "上傳全新安全資料表 (PDF)"],
+      ];
+
+      // 將預設資料寫入新工作表
+      sheet
+        .getRange(1, 1, defaultSettings.length, 2)
+        .setValues(defaultSettings);
+
+      // 美化設定表排版
+      sheet.getRange("A1:A6").setFontWeight("bold").setFontColor("#333333");
+      sheet.setColumnWidth(1, 150);
+      sheet.setColumnWidth(2, 250);
+
+      // 由於是剛建立，直接回傳預設物件給前端，省去查表時間
+      var settingsObj = {};
+      defaultSettings.forEach(function (row) {
+        settingsObj[row[0]] = row[1];
+      });
+      return settingsObj;
+    }
+
+    // 🎯 正常狀況：如果 settings 表存在，就正常讀取並打包回傳 JSON 物件
+    var lastRow = sheet.getLastRow();
+    if (lastRow === 0) return {};
+
+    var data = sheet.getRange(1, 1, lastRow, 2).getValues();
+    var settingsObj = {};
+    data.forEach(function (row) {
+      if (row[0]) settingsObj[row[0].trim()] = row[1];
+    });
+
+    return settingsObj;
+  } catch (e) {
+    Logger.log("讀取設定時發生錯誤: " + e.toString());
+    // 發生未知錯誤時的極致防呆回傳，確保前端 UI 不會白屏掛掉
+    return {
+      sidebarTitle: "品項防錯登錄",
+      dashboardTitle: "動態資產看板",
+      field1Name: "品項名稱",
+      field2Name: "廠牌",
+      field3Name: "版本日期",
+      field4Name: "上傳全新檔案 (PDF)",
+    };
+  }
+}
+
+/**
  * 動態獲取儲存的 Google Drive 資料夾 ID，若不存在則引導輸入或自動建立
  */
 function getFolderId() {
@@ -35,14 +99,14 @@ function getFolderId() {
       var ui = SpreadsheetApp.getUi();
       var response = ui.prompt(
         "⚙️ 系統首次初始化設定",
-        "請輸入您 Google Drive 中用來存放 SDS PDF 檔案的【資料夾 ID】。\n\n💡 若您尚未建立資料夾，請直接輸入【create】或【留空直接按確定】，系統將自動在您的雲端硬碟根目錄建立新資料夾！",
+        "請輸入您 Google Drive 中用來存放 PDF 檔案的【資料夾 ID】。\n\n💡 若您尚未建立資料夾，請直接輸入【create】或【留空直接按確定】，系統將自動在您的雲端硬碟根目錄建立新資料夾！",
         ui.ButtonSet.OK_CANCEL,
       );
 
       if (response.getSelectedButton() == ui.Button.OK) {
         var input = response.getResponseText().trim();
 
-        // ✨ 自動建立資料夾機制：當使用者輸入 create、CREATE 或留空時觸發
+        // ✨ 自動建立資料夾機制：當使用者輸入 create 或留空時觸發
         if (input.toLowerCase() === "create" || input === "") {
           var newFolder = DriveApp.createFolder(
             "🧪 實驗室 SDS 檔案庫 (自動建立)",
@@ -62,7 +126,6 @@ function getFolderId() {
         ui.alert("⚠️ 您取消了設定。系統將無法正常執行上傳與替換 PDF 功能。");
       }
     } catch (e) {
-      // 捕捉 doGet 或自動定時執行時可能因 UI 環境未就緒引發的錯誤
       Logger.log("無法開啟 UI 輸入框：" + e.toString());
     }
   }
@@ -123,7 +186,7 @@ function checkSDSExpirations() {
   }
 }
 
-// 讀取資料
+// 讀取主要資料表資產資料
 function getSDSDataFromSheet() {
   checkSDSExpirations();
   var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -161,15 +224,7 @@ function getSDSDataFromSheet() {
   return result;
 }
 
-// 快速更新日期
-function updateSDSDateInSheet(rowNum, newDateStr) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-  sheet.getRange(rowNum, 4).setValue(newDateStr);
-  checkSDSExpirations();
-  return "Success";
-}
-
-// 在 UI 修改儲存格文字資料
+// 在網頁 UI 上雙擊儲存格、即時修改欄位文字資料
 function updateCellFromUI(rowNum, columnType, newValue) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
@@ -184,7 +239,7 @@ function updateCellFromUI(rowNum, columnType, newValue) {
   }
 }
 
-// 新增品項與檔案上傳
+// 新增品項與檔案安全序列化上傳
 function addNewSDSWithFile(formData) {
   try {
     var folderId = getFolderId();
@@ -228,7 +283,7 @@ function addNewSDSWithFile(formData) {
   }
 }
 
-// 直接在 UI 替換指定項目的 PDF 檔案
+// 直接在網頁 UI 點選按鈕、覆蓋替換指定項目的 PDF 檔案
 function replaceSDSFileFromUI(
   rowNum,
   reagentName,
@@ -261,7 +316,7 @@ function replaceSDSFileFromUI(
   }
 }
 
-// 用於首次強制開通 Google Drive 權限審查與強制跳出 ID 設定的測試函式
+// 用於首次強制開通 Google 權限審查與驗證環境的測試函式
 function forceAuthorize() {
   var folderId = getFolderId();
   if (folderId) {
@@ -270,7 +325,7 @@ function forceAuthorize() {
   }
 }
 
-// 当试算表开启时，自动在上方选单建立「快捷功能选单」
+// 當試算表開啟時，自動在上方選單建立「快捷功能選单」
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu("🧪 SDS 系統管理")
@@ -280,10 +335,9 @@ function onOpen() {
 }
 
 /**
- * 供選單手動點擊使用的資料夾 ID 設定功能
+ * 供選單手動點擊使用的資料夾 ID 重設功能
  */
 function setupCustomFolderId() {
-  // 清除舊的屬性以強迫重新觸發獲取與輸入機制
   PropertiesService.getScriptProperties().deleteProperty(
     "GOOGLE_DRIVE_FOLDER_ID",
   );
@@ -319,10 +373,13 @@ function initializeSDSSheet() {
 
   sheet.autoResizeColumns(1, 7);
 
-  // 初始化欄位時，順便引導使用者輸入或自動建立資料夾
+  // 初始化主要欄位時，順便在背景觸發檢查並建立 settings 分頁
+  getSystemSettings();
+
+  // 引導使用者輸入或自動建立雲端硬碟資料夾
   getFolderId();
 
   SpreadsheetApp.getUi().alert(
-    "✅ 試算表欄位已初始化成功！您可以開始使用網頁 UI 登錄資料了。",
+    "✅ 試算表欄位已初始化成功！自訂設定表（settings分頁）也已同步建置完畢。您現在可以開啟網頁 UI 體驗客製化面板了！",
   );
 }
