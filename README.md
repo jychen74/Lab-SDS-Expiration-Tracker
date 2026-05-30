@@ -9,6 +9,72 @@ A serverless, zero-cost, and server-free Web Application designed specifically f
 
 ---
 
+
+## System Architecture / 系統架構
+
+```mermaid
+graph LR
+    classDef client fill:#e7f1ff,stroke:#0d6efd,stroke-width:2px,color:#0d6efd;
+    classDef gas fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#664d03;
+    classDef storage fill:#d1e7dd,stroke:#198754,stroke-width:2px,color:#146c43;
+
+    subgraph Client Side / 前端網頁
+        UI[Bootstrap 5 UI<br>動態看板 / 品項防錯表單]:::client
+    end
+
+    subgraph Serverless Backend / 後端中樞
+        GAS[Google Apps Script 大腦<br>PropertiesService 環境變數控管]:::gas
+    end
+
+    subgraph Storage Layer / 數據與檔案存儲
+        Sheet[(Google Sheets<br>結構化試算表資料庫)]:::storage
+        Drive[(Google Drive<br>序列化 PDF 安全檔案庫)]:::storage
+    end
+
+    UI -->|雙擊修改 / 表單提交| GAS
+    GAS -->|讀寫儲存格 / 3年效期校正| Sheet
+    GAS -->|Base64 檔案安全寫入| Drive
+    Drive -->|回傳連結| GAS
+    Sheet -->|即時動態資產看板| UI
+
+```
+
+
+
+
+## Deployment Flow / 架設流程概覽
+
+
+```mermaid
+graph TD
+    classDef step fill:#f8f9fa,stroke:#343a40,stroke-width:2px,color:#212529;
+    classDef action fill:#0d6efd,stroke:#0a58ca,stroke-width:1px,color:#fff;
+    classDef success fill:#198754,stroke:#146c43,stroke-width:1px,color:#fff;
+
+    Start --> Step1
+    Step1 --> Action1
+    Action1 --> Step2
+    Step2 --> Action2
+    Action2 --> Step3
+    Step3 --> Action3
+    Action3 --> End
+
+    Start(Start)
+    Step1(1 Click Copy Link):::step
+    Action1(Clone Spreadsheet Template to your Google Account):::action
+    Step2(2 Refresh Sheet and Click Initialize):::step
+    Action2(Grant Google OAuth Permissions and Auto Create Drive Folder):::action
+    Step3(3 Open Extensions and Deploy):::step
+    Action3(Select Web App type and Click Deploy button):::action
+    End(Deployment Complete and Get Web App URL):::success
+```
+
+
+```
+
+```
+
+
 ## Quick Start / 快速架設指南
 
 > **No Coding Required! / 完全不需要懂程式碼！**
