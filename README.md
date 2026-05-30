@@ -1,10 +1,10 @@
 # **[Lab-SDS-Expiration-Tracker](https://github.com/jychen74/Lab-SDS-Expiration-Tracker)**
 
-## 實驗室 SDS 效期與雲端硬碟自動化管理系統 (萬用自定義框架版)
+## 實驗室 SDS 效期自動化管理系統 (可自定義框架版)
 
 ### Customizable Serverless Asset & Compliance Lifecycle Tracker
 
-A serverless, zero-cost, and server-free Web Application designed specifically for research laboratories, medical institutions, and IT facilities to track document compliance, instrument calibrations, or Safety Data Sheets (SDS).
+A lightweight, zero-cost, and serverless Web Application originally inspired by research and medical laboratories, but fully optimized with high customizability to adapt to any compliance-driven workflow. Leveraging the integration of Google Sheets and Google Drive, this framework not only solves the regulatory necessity of tracking 3-year updates for Safety Data Sheets (SDS) but also offers a fully tailored environment. Without rewriting any code, users can instantly adapt this template to manage instrument calibrations, animal facility health monitoring reports, or IT security certificates.
 
 這是一個基於實驗室需求所設計的輕量化、零成本管理系統，但不限實驗室管理使用，經優化的版本具有高度自定性，可滿足各種使用需求。本專案設計利用 Google 試算表與雲端硬碟，不僅能解決安全資料表 (SDS) 每三年需定期更新版次的勞安剛需，更具備完全自定義能力，可自由轉職為儀器校正、動物房監測報告或資安憑證管理系統。
 
