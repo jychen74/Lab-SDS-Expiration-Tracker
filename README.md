@@ -70,11 +70,6 @@ graph TD
 ```
 
 
-```
-
-```
-
-
 ## Quick Start / 快速架設指南
 
 > **No Coding Required! / 完全不需要懂程式碼！**
