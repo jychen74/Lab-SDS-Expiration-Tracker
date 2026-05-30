@@ -1,14 +1,14 @@
-
 # **[Lab-SDS-Expiration-Tracker](https://github.com/jychen74/Lab-SDS-Expiration-Tracker)**
 
-### 實驗室 SDS 效期與雲端硬碟自動化管理系統
+## 實驗室 SDS 效期與雲端硬碟自動化管理系統 (萬用自定義框架版)
 
-A serverless, zero-cost, and server-free Web Application designed specifically for research and medical laboratories to track Safety Data Sheets (SDS) compliance.
+### Customizable Serverless Asset & Compliance Lifecycle Tracker
 
-這是一個專為生物、化學與醫學實驗室設計的輕量化、零成本管理系統。利用 Google 試算表與雲端硬碟，解決實驗室安全資料表（SDS）每三年需定期更新版次的勞安與合規需求。
+A serverless, zero-cost, and server-free Web Application designed specifically for research laboratories, medical institutions, and IT facilities to track document compliance, instrument calibrations, or Safety Data Sheets (SDS).
+
+這是一個基於實驗室需求所設計的輕量化、零成本管理系統，但不限實驗室管理使用，經優化的版本具有高度自定性，可滿足各種使用需求。本專案設計利用 Google 試算表與雲端硬碟，不僅能解決安全資料表 (SDS) 每三年需定期更新版次的勞安剛需，更具備完全自定義能力，可自由轉職為儀器校正、動物房監測報告或資安憑證管理系統。
 
 ---
-
 
 ## System Architecture / 系統架構
 
@@ -19,56 +19,25 @@ graph LR
     classDef storage fill:#d1e7dd,stroke:#198754,stroke-width:2px,color:#146c43;
 
     subgraph Client Side / 前端網頁
-        UI[Bootstrap 5 UI<br>動態看板 / 品項防錯表單]:::client
+        UI[Bootstrap 5 UI<br>動態自訂看板 / 品項防錯表單]:::client
     end
 
     subgraph Serverless Backend / 後端中樞
-        GAS[Google Apps Script 大腦<br>PropertiesService 環境變數控管]:::gas
+        GAS[Google Apps Script 大腦<br>環境變數與設定表自動初始化]:::gas
     end
 
     subgraph Storage Layer / 數據與檔案存儲
-        Sheet[(Google Sheets<br>結構化試算表資料庫)]:::storage
+        Sheet[(Google Sheets<br>結構化資產資料庫 & Settings 設定表)]:::storage
         Drive[(Google Drive<br>序列化 PDF 安全檔案庫)]:::storage
     end
 
     UI -->|雙擊修改 / 表單提交| GAS
-    GAS -->|讀寫儲存格 / 3年效期校正| Sheet
+    GAS -->|讀寫資產格 / 3年效期校正| Sheet
     GAS -->|Base64 檔案安全寫入| Drive
-    Drive -->|回傳連結| GAS
-    Sheet -->|即時動態資產看板| UI
-
+    Drive -->|回傳檔案安全連結| GAS
+    Sheet -->|載入資產資料 & 讀取自訂欄位名稱| GAS
+    GAS -->|傳回即時資產與動態 UI 標題配置| UI
 ```
-
-
-
-
-## Deployment Flow / 架設流程概覽
-
-
-```mermaid
-graph TD
-    classDef step fill:#f8f9fa,stroke:#343a40,stroke-width:2px,color:#212529;
-    classDef action fill:#0d6efd,stroke:#0a58ca,stroke-width:1px,color:#fff;
-    classDef success fill:#198754,stroke:#146c43,stroke-width:1px,color:#fff;
-
-    Start --> Step1
-    Step1 --> Action1
-    Action1 --> Step2
-    Step2 --> Action2
-    Action2 --> Step3
-    Step3 --> Action3
-    Action3 --> End
-
-    Start(Start)
-    Step1(1 Click Copy Link):::step
-    Action1(Clone Spreadsheet Template to your Google Account):::action
-    Step2(2 Refresh Sheet and Click Initialize):::step
-    Action2(Grant Google OAuth Permissions and Auto Create Drive Folder):::action
-    Step3(3 Open Extensions and Deploy):::step
-    Action3(Select Web App type and Click Deploy button):::action
-    End(Deployment Complete and Get Web App URL):::success
-```
-
 
 ## Quick Start / 快速架設指南
 
@@ -91,7 +60,7 @@ graph TD
 2. 點選試算表上方工具列的自訂選單：**【🧪 SDS 系統管理】 -> 【⚙️ 初始化試算表欄位】**。
 3. **帳號授權放行**：首次執行時 Google 會彈出隱私權警示畫面，請依序點選：
    * **「進階」** -> **「前往 shared_Lab_SDS (不安全)」** -> **「允許」**。
-4. **自動建立雲端資料夾**：授權完成後畫面會跳出提示對話框，**請直接「留空」（不要輸入任何文字）並點擊「確定」**，系統即會自動在您的雲端硬碟根目錄建好專用 PDF 資料夾。
+4. **系統自我初始化**：授權完成後畫面會跳出提示對話框，**請直接「留空」（不要輸入任何文字）並點擊「確定」**。系統即會自動在您的雲端硬碟根目錄建好專用 PDF 資料夾，並在試算表後台建立自訂設定表（`settings` 工作表）。
 
 #### 步驟 3：發布您的管理網頁
 
@@ -99,7 +68,7 @@ graph TD
 2. 進入程式碼畫面後，點擊右上方藍色的 **【部署】 -> 【新增部署】**。
 3. 點擊彈出視窗左上角的「齒輪圖示」，在選單中選取 **「網頁應用程式」**。
 4. 畫面的參數維持預設，直接點擊右下角的 **【部署】** 按鈕。
-5. **大功告成**：複製畫面最終產生的「網頁應用程式網址（URL）」，這就是您專屬的管理網頁了！將此網址提供給實驗室同仁即可開始使用。
+5. **大功告成**：複製畫面最終產生的「網頁應用程式網址（URL）」，這就是您專屬的管理網頁了！將此網址提供給同仁即可開始使用。
 
 ---
 
@@ -116,7 +85,7 @@ Click the link below to clone the system template directly into your personal Go
 2. Click the custom menu on the top toolbar: **【🧪 SDS 系統管理】 -> 【⚙️ 初始化試算表欄位】**.
 3. **Grant Permission**: Google will pop up a security warning for the first run. Grant permissions by clicking:
    * **"Advanced"** -> **"Go to shared_Lab_SDS (unsafe)"** -> **"Allow"**.
-4. **Auto Create Folder**: After authorization, a prompt window will appear. **Leave the text box completely BLANK and click "OK"**. The system will automatically create a dedicated PDF storage folder in your Google Drive root directory.
+4. **Self-Healing Initialization**: After authorization, a prompt window will appear. **Leave the text box completely BLANK and click "OK"**. The system will automatically create a dedicated PDF storage folder in your Google Drive and set up the background custom configurations (`settings` sheet).
 
 #### Step 3: Deploy the Web Application
 
@@ -128,7 +97,18 @@ Click the link below to clone the system template directly into your personal Go
 
 ---
 
+## Customization / 進階自訂系統說明
+
+本系統具備完全自定義與 White-label 能力。使用者可在完全不修改任何 HTML 與 GAS 程式碼的前提下，直接透過修改試算表內部的 **`settings`** 工作表，為網頁進行一鍵轉職：
+
+* **轉職範例 1：醫療儀器校正管理**
+  將 `sidebarTitle` 改為「儀器設備校正盤點」，`field1Name` 改為「儀器設備名稱」，網頁 UI 即自動變更。
+* **轉職範例 2：動物房健康監控報告**
+  將 `sidebarTitle` 改為「動物房監測報告登錄」，`field1Name` 改為「監測區域/代號」，即可完美適用。
+
+---
+
 ## License
 
 This project is licensed under the MIT License - feel free to use and adapt it for your lab!
-本專案採用 MIT 開源授權，歡迎自由複製、修改並部署於您的實驗室中！
+本專案採用 MIT 開源授權，歡迎自由複製、修改並部署於您的研究機構與實驗室中！
