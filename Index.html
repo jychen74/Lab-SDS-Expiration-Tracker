@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>實驗室 SDS 效期管理系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: "Helvetica Neue", Helvetica, Arial, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    .main-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .left-sidebar {
+      background-color: #ffffff;
+      padding: 20px;
+      border-right: 1px solid #dee2e6;
+    }
+    .right-content {
+      padding: 20px;
+    }
+    @media (max-width: 991.98px) {
+      .left-sidebar {
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 30px;
+      }
+    }
+    .table-container {
+      overflow-x: auto;
+      max-height: 650px;
+      overflow-y: auto;
+    }
+    th {
+      background-color: #343a40 !important;
+      color: #ffffff !important;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    th:hover {
+      background-color: #495057 !important;
+    }
+    .editable-cell {
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.2s;
+    }
+    .editable-cell:hover {
+      background-color: #e9ecef !important;
+    }
+    .editable-cell::after {
+      content: "✏️";
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      font-size: 12px;
+      transition: opacity 0.2s;
+    }
+    .editable-cell:hover::after {
+      opacity: 0.5;
+    }
+    .status-badge {
+      font-weight: bold;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    
+    /* ============================================================ */
+    /* Ko-fi 贊助按鈕與動態效果自訂美化                             */
+    /* ============================================================ */
+    .btn-kofi {
+      background-color: #ff5e5b;
+      color: #ffffff !important;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 4px 6px rgba(255, 94, 91, 0.15);
+    }
+    .btn-kofi:hover {
+      background-color: #ef4a47;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(255, 94, 91, 0.3);
+    }
+    .btn-kofi:active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="text-center">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+      <div class="mt-2 fw-bold text-secondary">系統讀取與即時校正效期中...</div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row main-container">
+      
+      <div class="col-lg-4 left-sidebar">
+        <h3 class="mb-4 text-primary fw-bold text-center text-lg-start">🧪 試劑品項防錯登錄</h3>
+        
+        <form id="sdsForm" onsubmit="handleFormSubmit(event)">
+          <div class="mb-3">
+            <label for="reagentName" class="form-label fw-bold">試劑/套組名稱 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="reagentName" required placeholder="例如：SQK-NBD114.24 文庫製備套組">
+          </div>
+          
+          <div class="mb-3">
+            <label for="brandName" class="form-label fw-bold">原廠廠牌 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="brandName" required placeholder="例如：Oxford Nanopore (ONT)">
+          </div>
+          
+          <div class="mb-3">
+            <label for="versionDate" class="form-label fw-bold">目前 SDS 版本日期 <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="versionDate" required>
+          </div>
+          
+          <div class="mb-4">
+            <label for="sdsFile" class="form-label fw-bold">上傳全新安全資料表 (PDF) <span class="text-danger">*</span></label>
+            <input class="form-control" type="file" id="sdsFile" accept=".pdf" required>
+            <div class="form-text text-muted">檔案將經由安全序列化直接存入實驗室專用雲端硬碟。</div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary w-100 fw-bold py-2 mb-3">💾 寫入資料庫並同步雲端上傳</button>
+        </form>
+        
+        <div class="text-center mt-3 text-muted">
+          <small>💡 提示：雙擊表格文字可直接修改。<br>點擊最右側按鈕可直接替換 PDF。<br>點擊【序號】或【狀態】表頭可進行排序。</small>
+        </div>
+
+        <div class="text-center mt-4 pt-3 border-top">
+          <a href="https://ko-fi.com/jingyuanchen" target="_blank" class="btn btn-kofi w-100 fw-bold">
+            ☕ Support Me on Ko-fi
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-lg-8 right-content">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
+          <h2 class="fw-bold text-dark m-0">📊 實驗室動態資產看板</h2>
+          <div style="max-width: 300px; width: 100%;">
+            <input type="text" id="searchInput" class="form-control" onkeyup="filterTable()" placeholder="🔍 輸入關鍵字毫秒級動態篩選...">
+          </div>
+        </div>
+        
+        <div class="table-container border rounded">
+          <table class="table table-striped table-hover m-0 align-middle">
+            <thead>
+              <tr>
+                <th onclick="sortTable(0)">序號 ⇅</th>
+                <th>試劑/套組名稱</th>
+                <th>廠牌</th>
+                <th>目前 SDS 版本日期</th>
+                <th>下次更新日期 (3年)</th>
+                <th onclick="sortTable(5)">狀態 ⇅</th>
+                <th class="text-center">雲端管轄</th>
+              </tr>
+            </thead>
+            <tbody id="sdsTableBody">
+              </tbody>
+          </table>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <input type="file" id="replaceFileInput" accept=".pdf" style="display: none;" onchange="executeFileReplacement()">
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let globalDataCache = [];
+    let currentReplaceTarget = null; // 紀錄當前準備替換 PDF 的 rowNum 與品項名
+    let currentSortDirections = [true, true, true, true, true, true, true]; // 控制排序方向
+
+    // 網頁開啟時自動讀取資料
+    document.addEventListener("DOMContentLoaded", function() {
+      loadData();
+    });
+
+    function showLoading(status) {
+      document.getElementById("loadingOverlay").style.display = status ? "flex" : "none";
+    }
+
+    // 調用後端獲取完整試算表資產
+    function loadData() {
+      showLoading(true);
+      google.script.run
+        .withSuccessHandler(function(data) {
+          globalDataCache = data;
+          renderTable(data);
+          showLoading(false);
+        })
+        .withFailureHandler(function(err) {
+          alert("資料載入嚴重錯誤: " + err);
+          showLoading(false);
+        })
+        .getSDSDataFromSheet();
+    }
+
+    // 渲染前端 Table HTML 結構
+    function renderTable(data) {
+      const tbody = document.getElementById("sdsTableBody");
+      tbody.innerHTML = "";
+      
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">📭 目前尚無登錄任何資產，請由左側面板進行登錄。</td></tr>`;
+        return;
+      }
+      
+      data.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="fw-bold text-secondary text-center">${item.id}</td>
+          <td class="editable-cell" ondblclick="makeEditable(this, ${item.rowNum}, 'name')">${item.name}</td>
+          <td class="editable-cell" ondblclick="makeEditable(this, ${item.rowNum}, 'brand')">${item.brand}</td>
+          <td class="editable-cell text-center" ondblclick="makeEditable(this, ${item.rowNum}, 'lastReview')">${item.lastReview}</td>
+          <td class="text-center fw-bold text-dark">${item.nextReview}</td>
+          <td class="status-badge" style="background-color: ${getBadgeColor(item.status).bg}; color: ${getBadgeColor(item.status).text};">${item.status}</td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              ${item.fileUrl ? `<a href="${item.fileUrl}" target="_blank" class="btn btn-outline-success">👁️ 檢視</a>` : `<button class="btn btn-outline-secondary" disabled>🚫 無檔</button>`}
+              <button class="btn btn-outline-primary" onclick="triggerFileReplacement(${item.rowNum}, '${item.name}', '${item.brand}')">🔄 替換 PDF</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getBadgeColor(status) {
+      if (status.includes("過期")) return { bg: "#FFD2D2", text: "#990000" };
+      if (status.includes("預警")) return { bg: "#FFE4C4", text: "#B8860B" };
+      return { bg: "#D4EDDA", text: "#155724" };
+    }
+
+    // 處理雙擊即時修改儲存格文字 (Inline Editing)
+    function makeEditable(cell, rowNum, columnType) {
+      if (cell.querySelector("input")) return; // 防止重複點擊
+      
+      const originalValue = cell.innerText.trim();
+      const input = document.createElement("input");
+      input.type = columnType === "lastReview" ? "date" : "text";
+      input.className = "form-control form-control-sm d-inline-block";
+      input.value = originalValue;
+      input.style.width = "100%";
+      
+      cell.innerText = "";
+      cell.appendChild(input);
+      input.focus();
+      
+      // 綁定儲存事件
+      input.onblur = function() {
+        commitCellEdit(cell, rowNum, columnType, input.value, originalValue);
+      };
+      
+      input.onkeydown = function(e) {
+        if (e.key === "Enter") input.blur();
+        if (e.key === "Escape") {
+          cell.innerHTML = originalValue; // 取消修改
+        }
+      };
+    }
+
+    function commitCellEdit(cell, rowNum, columnType, newValue, originalValue) {
+      if (newValue === originalValue) {
+        cell.innerHTML = originalValue;
+        return;
+      }
+      
+      showLoading(true);
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res.success) {
+            loadData(); // 重新讀取，同步重新整理狀態與 3 年效期計算
+          } else {
+            alert("修改儲存失敗：" + res.error);
+            cell.innerHTML = originalValue;
+            showLoading(false);
+          }
+        })
+        .withFailureHandler(function(err) {
+          alert("連線後端失敗：" + err);
+          cell.innerHTML = originalValue;
+          showLoading(false);
+        })
+        .updateCellFromUI(rowNum, columnType, newValue);
+    }
+
+    // 點擊「替換 PDF」按鈕時，觸發隱藏的 input file 標籤
+    function triggerFileReplacement(rowNum, reagentName, brandName) {
+      currentReplaceTarget = { rowNum, reagentName, brandName };
+      document.getElementById("replaceFileInput").click();
+    }
+
+    // 執行線上覆蓋/替換雲端 PDF
+    function executeFileReplacement() {
+      const fileInput = document.getElementById("replaceFileInput");
+      if (fileInput.files.length === 0 || !currentReplaceTarget) return;
+      
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      showLoading(true);
+      reader.onload = function(e) {
+        const fileData = e.target.result;
+        google.script.run
+          .withSuccessHandler(function(res) {
+            alert(res.message);
+            fileInput.value = ""; // 清空
+            currentReplaceTarget = null;
+            loadData(); // 重新整理看板
+          })
+          .withFailureHandler(function(err) {
+            alert("檔案替換發生重大錯誤：" + err);
+            showLoading(false);
+          })
+          .replaceSDSFileFromUI(
+            currentReplaceTarget.rowNum,
+            currentReplaceTarget.reagentName,
+            currentReplaceTarget.brandName,
+            fileData,
+            file.name
+          );
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 表單登錄提交與 Base64 序列化上傳
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      showLoading(true);
+      
+      const fileInput = document.getElementById("sdsFile");
+      const file = fileInput.files[0];
+      
+      const formData = {
+        reagentName: document.getElementById("reagentName").value.trim(),
+        brandName: document.getElementById("brandName").value.trim(),
+        versionDate: document.getElementById("versionDate").value,
+        fileData: null,
+        fileName: null
+      };
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        formData.fileData = e.target.result;
+        formData.fileName = file.name;
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            alert(response.message);
+            document.getElementById("sdsForm").reset(); // 重置表單
+            loadData(); // 重新整理看板
+          })
+          .withFailureHandler(function(error) {
+            alert("系統寫入發生錯誤: " + error);
+            showLoading(false);
+          })
+          .addNewSDSWithFile(formData);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 毫秒級前端關鍵字動態搜尋功能
+    function filterTable() {
+      const input = document.getElementById("searchInput").value.toUpperCase();
+      const trs = document.getElementById("sdsTableBody").getElementsByTagName("tr");
+      
+      for (let i = 0; i < trs.length; i++) {
+        if (trs[i].getElementsByTagName("td").length < 2) continue; // 跳過查無資料的行
+        const nameText = trs[i].getElementsByTagName("td")[1].innerText.toUpperCase();
+        const brandText = trs[i].getElementsByTagName("td")[2].innerText.toUpperCase();
+        
+        if (nameText.indexOf(input) > -1 || brandText.indexOf(input) > -1) {
+          trs[i].style.display = "";
+        } else {
+          trs[i].style.display = "none";
+        }
+      }
+    }
+
+    // 欄位排序引擎（支援序號數值、狀態優先級排序）
+    function sortTable(colIndex) {
+      const tableBody = document.getElementById("sdsTableBody");
+      let rows = Array.from(tableBody.querySelectorAll("tr"));
+      if (rows.length === 0 || rows[0].innerText.includes("目前尚無登錄")) return;
+
+      const direction = currentSortDirections[colIndex];
+      currentSortDirections[colIndex] = !direction; // 切換下一次排序方向
+
+      rows.sort((rowA, rowB) => {
+        const cellA = rowA.getElementsByTagName("td")[colIndex].innerText.trim();
+        const cellB = rowB.getElementsByTagName("td")[colIndex].innerText.trim();
+
+        if (colIndex === 0) {
+          // 序號排序 (數值比較)
+          return direction ? Number(cellA) - Number(cellB) : Number(cellB) - Number(cellA);
+        } else if (colIndex === 5) {
+          // 狀態優先級排序 (🚨已過期 > ⚠️預警 > ✅安全)
+          const getPriority = (status) => {
+            if (status.includes("🚨")) return 3;
+            if (status.includes("⚠️")) return 2;
+            return 1;
+          };
+          return direction ? getPriority(cellB) - getPriority(cellA) : getPriority(cellA) - getPriority(cellB);
+        }
+        return 0;
+      });
+
+      // 重新注入排序後的 rows
+      tableBody.innerHTML = "";
+      rows.forEach(row => tableBody.appendChild(row));
+    }
+  </script>
+</body>
+</html>
