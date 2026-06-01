@@ -113,7 +113,7 @@ Click the link below to clone the system template directly into your personal Go
 2. 看看瀏覽器最上方的 **網址列** ，網址最後面 `/folders/` 之後、長長的一串隨機英數亂數（如下圖所示），就是該資料夾的物理 ID
 
    ```text
-   [https://drive.google.com/drive/folders/1A2B3C_4D5E6F_7G8H9I0JkLmNoPqRsTu](https://drive.google.com/drive/folders/1A2B3C_4D5E6F_7G8H9I0JkLmNoPqRsTu)
+   https://drive.google.com/drive/folders/1A2B3C_4D5E6F_7G8H9I0JkLmNoPqRsTu
                                           └─── 🎯 請只複製這一段長亂數 ───┘
    ```
 
