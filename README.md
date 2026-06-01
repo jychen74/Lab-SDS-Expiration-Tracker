@@ -107,11 +107,16 @@ Click the link below to clone the system template directly into your personal Go
 
 ### 🔍 核心操作 1：如何準確找出「資料夾 ID」？
 
-請放心，這非常簡單，只需要看網址列即可：
+請放心，這非常簡單，只需要看網址列即可：打開您的 Google 雲端硬碟（Google Drive）。
 
-1. 打開您的 Google 雲端硬碟（Google Drive）。
-2. 點進您 **準備用來存放上傳 PDF 的那個資料夾** 。
-3. 看看瀏覽器最上方的 **網址列** ，網址最後面 `/folders/` 之後、長長的一串隨機英數亂數（如下圖所示），就是該資料夾的物理 ID [https://drive.google.com/drive/folders/1A2B3C_4D5E6F_7G8H9I0JkLmNoPqRsTu](https://drive.google.com/drive/folders/1A2B3C_4D5E6F_7G8H9I0JkLmNoPqRsTu)
+1. 點進您 **準備用來存放上傳 PDF 的那個資料夾** 。
+2. 看看瀏覽器最上方的 **網址列** ，網址最後面 `/folders/` 之後、長長的一串隨機英數亂數（如下圖所示），就是該資料夾的物理 ID
+
+   ```plaintext
+   ```text
+   [https://drive.google.com/drive/folders/1A2B3C_4D5E6F_7G8H9I0JkLmNoPqRsTu](https://drive.google.com/drive/folders/1A2B3C_4D5E6F_7G8H9I0JkLmNoPqRsTu)
+                                          └─── 🎯 請只複製這一段長亂數 ───┘
+   ```
 
 ### 🔄 核心操作 2：如何變更或更新資料夾 ID？
 
